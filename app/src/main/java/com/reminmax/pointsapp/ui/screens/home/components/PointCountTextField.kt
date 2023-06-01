@@ -19,21 +19,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import com.reminmax.pointsapp.R
-import com.reminmax.pointsapp.ui.screens.home.HomeAction
+import com.reminmax.pointsapp.ui.theme.PointsAppTheme
 import com.reminmax.pointsapp.ui.theme.dimensions
 
 @Composable
 fun PointCountTextField(
     value: String,
     errorMessage: String?,
-    dispatchAction: (HomeAction) -> Unit,
+    onGetPoints: () -> Unit,
+    onPointCountValueChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val trailingIconView = @Composable {
         IconButton(
             onClick = {
-                dispatchAction(HomeAction.PointCountValueChanged(""))
+                onPointCountValueChanged("")
             }
         ) {
             Icon(
@@ -47,7 +49,7 @@ fun PointCountTextField(
         OutlinedTextField(
             value = value,
             onValueChange = { newValue ->
-                dispatchAction(HomeAction.PointCountValueChanged(newValue))
+                onPointCountValueChanged(newValue)
             },
             modifier = modifier
                 .fillMaxWidth()
@@ -74,7 +76,7 @@ fun PointCountTextField(
             ),
             keyboardActions = KeyboardActions(
                 onDone = {
-                    dispatchAction(HomeAction.GetPoints)
+                    onGetPoints()
                 }
             ),
             singleLine = true,
@@ -93,5 +95,19 @@ fun PointCountTextField(
                 maxLines = 1
             )
         }
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun PointCountTextFieldPreview() {
+    PointsAppTheme {
+        PointCountTextField(
+            value = "10",
+            errorMessage = "some error text",
+            onGetPoints = {},
+            onPointCountValueChanged = {},
+            modifier = Modifier
+        )
     }
 }

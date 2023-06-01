@@ -49,7 +49,12 @@ fun HomeRoute(
         isLoading = uiState.isLoading,
         isGoButtonAvailable = uiState.isGoButtonAvailable,
         errorMessage = uiState.errorMessage,
-        dispatchAction = viewModel::dispatch
+        onGetPoints = {
+            viewModel.dispatch(HomeAction.GetPoints)
+        },
+        onPointCountValueChanged = { newValue ->
+            viewModel.dispatch(HomeAction.PointCountValueChanged(newValue))
+        },
     )
 }
 
@@ -60,7 +65,8 @@ fun HomeScreen(
     isGoButtonAvailable: Boolean,
     isLoading: Boolean,
     errorMessage: String?,
-    dispatchAction: (HomeAction) -> Unit,
+    onGetPoints: () -> Unit,
+    onPointCountValueChanged: (String) -> Unit,
 ) {
     val scaffoldState = rememberScaffoldState()
     Scaffold(
@@ -72,7 +78,8 @@ fun HomeScreen(
             isGoButtonAvailable = isGoButtonAvailable,
             errorMessage = errorMessage,
             isLoading = isLoading,
-            dispatchAction = dispatchAction,
+            onGetPoints = onGetPoints,
+            onPointCountValueChanged = onPointCountValueChanged,
             modifier = Modifier.padding(innerPadding),
         )
     }
@@ -84,7 +91,8 @@ fun HomeScreenContent(
     isGoButtonAvailable: Boolean,
     errorMessage: String?,
     isLoading: Boolean,
-    dispatchAction: (HomeAction) -> Unit,
+    onGetPoints: () -> Unit,
+    onPointCountValueChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -103,14 +111,13 @@ fun HomeScreenContent(
         PointCountTextField(
             value = pointCount,
             errorMessage = errorMessage,
-            dispatchAction = dispatchAction,
-            modifier = Modifier.padding(top = MaterialTheme.spacing.large)
+            onGetPoints = onGetPoints,
+            onPointCountValueChanged = onPointCountValueChanged,
+            modifier = Modifier.padding(top = MaterialTheme.spacing.large),
         )
 
         LoadingButton(
-            onClick = {
-                dispatchAction(HomeAction.GetPoints)
-            },
+            onClick = { onGetPoints() },
             modifier = modifier.fillMaxWidth(),
             enabled = isGoButtonAvailable && !isLoading,
             loading = isLoading,
@@ -134,7 +141,8 @@ fun HomeScreenPreview() {
             isGoButtonAvailable = false,
             pointCount = "10",
             errorMessage = null,
-            dispatchAction = {}
+            onGetPoints = {},
+            onPointCountValueChanged = {},
         )
     }
 }
