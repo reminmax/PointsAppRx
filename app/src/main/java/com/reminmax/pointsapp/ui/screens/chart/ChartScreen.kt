@@ -68,7 +68,12 @@ fun ChartRoute(
         snackBarHostState = snackBarHostState,
         onNavigateBack = onNavigateBack,
         chartStyle = uiState.chartStyle,
-        dispatchAction = viewModel::dispatch,
+        onChartStyleSelected = { newStyle ->
+            viewModel.dispatch(ChartAction.ChartStyleSelected(newStyle))
+        },
+        onSaveChartToFile = {
+            viewModel.dispatch(ChartAction.SaveChartToFile)
+        },
         screenshotController = screenshotController,
     )
 
@@ -86,7 +91,9 @@ fun ChartRoute(
                     captureCanvasToBitmap(
                         context = context,
                         screenshotController = screenshotController,
-                        dispatchAction = viewModel::dispatch,
+                        onShowUserMessage = { msgText ->
+                            viewModel.dispatch(ChartAction.ShowUserMessage(msgText))
+                        },
                         fileSavedSuccessfully = fileSavedSuccessfully,
                         captureCanvasToBitmapError = captureCanvasToBitmapError,
                         saveImageToMediaStoreError = saveImageToMediaStoreError,
@@ -104,7 +111,9 @@ fun ChartRoute(
                         captureCanvasToBitmap(
                             context = context,
                             screenshotController = screenshotController,
-                            dispatchAction = viewModel::dispatch,
+                            onShowUserMessage = { msgText ->
+                                viewModel.dispatch(ChartAction.ShowUserMessage(msgText))
+                            },
                             fileSavedSuccessfully = fileSavedSuccessfully,
                             captureCanvasToBitmapError = captureCanvasToBitmapError,
                             saveImageToMediaStoreError = saveImageToMediaStoreError,
@@ -152,7 +161,8 @@ fun ChartScreen(
     snackBarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     chartStyle: LinearChartStyle,
-    dispatchAction: (ChartAction) -> Unit,
+    onChartStyleSelected :(LinearChartStyle) -> Unit,
+    onSaveChartToFile :() -> Unit,
     screenshotController: ScreenshotController,
 ) {
     val scaffoldState = rememberScaffoldState()
@@ -165,17 +175,15 @@ fun ChartScreen(
                 modifier = Modifier,
                 title = stringResource(id = R.string.chartScreenHeader),
                 onNavigateBack = onNavigateBack,
-                onSaveChartToFile = {
-                    dispatchAction(ChartAction.SaveChartToFile)
-                },
+                onSaveChartToFile = onSaveChartToFile,
             )
         },
     ) { innerPadding ->
         ChartScreenContent(
             points = points,
             chartStyle = chartStyle,
-            dispatchAction = dispatchAction,
             screenshotController = screenshotController,
+            onChartStyleSelected = onChartStyleSelected,
             modifier = Modifier.padding(innerPadding),
         )
     }
@@ -185,7 +193,7 @@ fun ChartScreen(
 fun ChartScreenContent(
     points: List<Point>,
     chartStyle: LinearChartStyle,
-    dispatchAction: (ChartAction) -> Unit,
+    onChartStyleSelected :(LinearChartStyle) -> Unit,
     screenshotController: ScreenshotController,
     modifier: Modifier = Modifier,
 ) {
@@ -194,9 +202,7 @@ fun ChartScreenContent(
         ChartScreenContentVertical(
             points = points,
             screenHeight = windowInfo.screenHeight,
-            onChartStyleSelected = { newStyle ->
-                dispatchAction(ChartAction.ChartStyleSelected(newStyle))
-            },
+            onChartStyleSelected = onChartStyleSelected,
             chartStyle = chartStyle,
             screenshotController = screenshotController,
             modifier = modifier
@@ -205,9 +211,7 @@ fun ChartScreenContent(
         ChartScreenContentHorizontal(
             points = points,
             chartStyle = chartStyle,
-            onChartStyleSelected = { newStyle ->
-                dispatchAction(ChartAction.ChartStyleSelected(newStyle))
-            },
+            onChartStyleSelected = onChartStyleSelected,
             screenshotController = screenshotController,
             modifier = modifier
         )
@@ -217,10 +221,10 @@ fun ChartScreenContent(
 private suspend fun captureCanvasToBitmap(
     context: Context,
     screenshotController: ScreenshotController,
-    dispatchAction: (ChartAction) -> Unit,
     fileSavedSuccessfully: String,
     captureCanvasToBitmapError: String,
     saveImageToMediaStoreError: String,
+    onShowUserMessage: (String) -> Unit,
 ) {
     screenshotController.captureToBitmap(
         config = Bitmap.Config.ARGB_8888
@@ -229,21 +233,15 @@ private suspend fun captureCanvasToBitmap(
             context = context,
             bitmap = bitmap
         )
-        dispatchAction(
-            ChartAction.ShowUserMessage(
-                messageToShow = if (uri != null) {
-                    "$fileSavedSuccessfully: $uri"
-                } else {
-                    saveImageToMediaStoreError
-                }
-            )
+        onShowUserMessage(
+            if (uri != null) {
+                "$fileSavedSuccessfully: $uri"
+            } else {
+                saveImageToMediaStoreError
+            }
         )
     }.onFailure {
-        dispatchAction(
-            ChartAction.ShowUserMessage(
-                it.localizedMessage ?: captureCanvasToBitmapError
-            )
-        )
+        onShowUserMessage(it.localizedMessage ?: captureCanvasToBitmapError)
     }
 }
 
@@ -299,8 +297,9 @@ fun ChartScreenPreview() {
             snackBarHostState = SnackbarHostState(),
             onNavigateBack = {},
             chartStyle = LinearChartStyle.DEFAULT,
-            dispatchAction = {},
             screenshotController = rememberScreenshotController(),
+            onChartStyleSelected = {},
+            onSaveChartToFile = {},
         )
     }
 }
